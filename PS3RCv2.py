@@ -14,6 +14,7 @@
 import time
 import pygame
 import threading
+import queue
 import pigpio
 import subprocess
 
@@ -32,11 +33,17 @@ controller_MAC = "70:20:84:5E:F7:5E" # TMBH PS4 controller
 controller_forward = 1 # Forward and backward of left joystick
 controller_steer   = 2 # Left and right of right joystick
 controller_turbo   = 4 # Front left bumper (L1)
+controller_deadzone_upper = 0.3
+controller_deadzone_lower = -0.3
 
 # Controller check interval/rate
 controller_check_interval = 10 #seconds
 controller_init_retry_interval = 0.2 #seconds
 controller_init_retry_max = controller_check_interval / controller_init_retry_interval
+
+# Speed manager update interval
+speed_change_max = 100 #pulse width per interval
+speed_change_interval = 0.1 #seconds
 
 # Motor straight/stable values
 motor_forward_stable = 1300
@@ -74,46 +81,73 @@ def check_controller(discon=False, attempts=0):
 # Function designed to create and run within it's own thread. Runs every controller_check_interval
 # seconds. Checks whether or not the controller defined by controller_MAC is still connected and
 # run check_controller to being re-initializaing the pygame controller if it isn't
-# TODO find a more python way to check for the controller connection in place of subprocess
+# I would like to use a proper library instead of subprocess with hcitool, but pybluez can't
 def controller_manager():
-	t=threading.Timer(controller_check_interval, controller_manager)
-	t.daemon = True
-	t.start()
-	
-	blu = subprocess.getoutput("hcitool con")
-	if not controller_MAC in blu:
-		check_controller()
+	while True:
+		if not controller_MAC in subprocess.getoutput("hcitool con"):
+			check_controller()
+		time.sleep(controller_check_interval)
 
 
-# Given a pygame JOYAXISMOTION event, modifies the pulse width on the GPIO pin corresponding with
-# the drive motor.
-# TODO turbo
-def accel_event(event):
-	global pi
-	
+# TODO speed_calc documentation
+# TODO Globally define throttle weighting and turbo modifier
+def speed_calc(axis_value, turbo):
 	throttle = motor_forward_stable
-	if event.value < -0.3 or 0.3 < event.value:
-		throttle += int(event.value*100)
-	pi.set_servo_pulsewidth(GPIO_esc, throttle)
+	if axis_value < controller_deadzone_lower or controller_dead_upper < axis_value:
+		if turbo:
+			axis_value *= 2
+		throttle += int(axis_value*100)
+	return throttle
+
+# TODO speed_manager documentation
+# TODO If possible, make this not quite as redundant
+def speed_manager(gpio_controller, event_queue):
+	turbo = False
+	target_axis = 0.0
+	target_speed = motor_forward_stable
+	current_speed = motor_forward_stable
+	
+	while True:
+		if current_speed is taget_speed:
+			event = event_queue.get()
+			if event.type is pygame.JOYAXISMOTION:
+				target_axis = event.value
+			elif event.type is pygame.JOYBUTTONDOWN:
+				turbo = True
+			elif event.type is pygame.JOYBUTTONUP:
+				turbo = False
+			target_speed = speed_calc(target_axis, turbo)
+			event_queue.task_done()
+			
+		else:
+			time.sleep(speed_change_interval)
+			try:
+				event = event_queue.get_nowait()
+				if event.type is pygame.JOYAXISMOTION:
+					target_axis = event.value
+				elif event.type is pygame.JOBUTTONDOWN:
+					turbo = True
+				elif event.type is pygame.JOYBUTTONUP:
+					turbo = False
+				target_speed = speed_calc(target_axis, turbo)
+				event_queue.task_done()
+			except queue.Empty as e:
+				pass
+		
+		current_speed += max(min(target_speed-current_speed, speed_change_max), -speed_change_max)
+		gpio_controller(GPIO_esc, current_speed)
+
 
 # Given a pygame JOYAXISMOTION event, modifies the pulse width on the GPIO pin corresponding with
 # the steer servo.
-def steer_event(event):
-	global pi
-	
+# TODO Globally define left and right steer weightings
+def steer_event(event, gpio_controller):
 	steer = motor_steer_straight
-	if event.value < -0.3:
+	if event.value < controller_deadzone_lower:
 		steer += int(event.value*355)
-	elif 0.3 < event.value:
+	elif controller_deadzone_upper < event.value:
 		steer += int(event.value*370)
-	pi.set_servo_pulsewidth(GPIO_servo, steer)
-
-# TODO Placeholders for when I figure out the logic for turbo
-def turbo_on_event(event):
-	print("Turbo \"on\"")
-
-def turbo_off_event(event):
-	print("Turbo \"off\"")
+	gpio_controller.set_servo_pulsewidth(GPIO_servo, steer)
 
 # Function desiged to run on the same thread that pygame was initialized in. Waits for an event
 # listed in desired_pygame_events. If it is a JOYAXISMOTION event, calls accel_event or steer_event
@@ -121,30 +155,34 @@ def turbo_off_event(event):
 # and the button is controller_turbo, calls turbo_on_event. If it is a JOYBUTTONUP event and the
 # button is cntroller_turbo, calls turbo_on_event
 # TODO Update documentation and code for actual turbo implementation
-def event_manager():
+# TODO Implement cleanup on pygame.QUIT event
+def event_manager(gpio_controller):
+	speed_events = queue.Queue()
+	thread_speed_manager = threading.Thread(target=speed_manager, args=(gpio_controller, speed_events), daemon=True)
+	thread_speed_manager.start()
+	
 	while True:
 		event = pygame.event.wait()
 		if event.type is pygame.JOYAXISMOTION:
 			if event.axis is controller_forward:
-				accel_event(event)
+				speed_events.put(event)
 			elif event.axis is controller_steer:
-				steer_event(event)
+				steer_event(event, gpio_controller)
+			
 		elif event.type is pygame.JOYBUTTONDOWN:
 			if event.button is controller_turbo:
-				turbo_on_event(event)
+				speed_event.put(event)
+			
 		elif event.type is pygame.JOYBUTTONUP:
 			if event.button is controller_turbo:
-				turbo_off_event(event)
+				speed_event.put(event)
 
 
 # Main function for remote control of MRV. Can run on it's own thread. Initializes pigpio object,
 # calibrates the ESC, initializes pygame, establishes the allowed pygame events, initializes the
 # controller, and calls the controller manager and controller event manager.
-# TODO pass the pigpio object instead of leaving it global
 def RCPi():
-	global pi
-	
-	# Initialize pi and quit if it fails
+	# Initialize pigpio client and quit if it fails
 	pi = pigpio.pi()
 	if not pi.connected:
 		print("pigpio daemon not running")
@@ -170,15 +208,12 @@ def RCPi():
 	check_controller()
 	
 	# Call managers
-	controller_manager()
-	event_manager()
+	thread_controller_manager = threading.Thread(target=controller_manager, daemon=True)
+	thread_controller_manager.start()
+	event_manager(pi)
 
 
 
-# Run RCPi in a new thread, run as a daemon for clean exit
-thread_RCPi = threading.Thread(target=RCPi, daemon=True)
+# Run RCPi in a new thread
+thread_RCPi = threading.Thread(target=RCPi)
 thread_RCPi.start()
-
-while(True):
-	# placeholder for ModuleComm.py rewrite
-	time.sleep(1)
