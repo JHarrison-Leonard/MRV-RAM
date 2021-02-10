@@ -8,9 +8,8 @@
 # some of the quirks involved with writing module manager code making use
 # of a piped serial IO stream.
 
-import beepy # Used for debug
 import sys # Used by read()
-
+import RPi.GPIO as GPIO
 
 
 # Easy to use read input function. The builtin python input function has some quirks that do
@@ -52,9 +51,18 @@ while trade("Recognized") != "Ready":
 # MDM logic
 # At this point, whatever issues there are with the buffer have fixed themselves and lines
 # from stdin can be freely read using trade() and read()
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
+GPIO.setup(21, GPIO.OUT)
+GPIO.setup(4, GPIO.OUT)
+GPIO.output(21, GPIO.LOW)
+GPIO.outpit(4, GPIO.LOW)
+
 while True:
 	detect = trade("Metal?")
 	if detect == "Detected":
-		beepy.beep(sound=1)
+		GPIO.output(21, GPIO.HIGH)
+		GPIO.output(4, GPIO.HIGH)
 	elif detect == "None":
-		beepy.beep(sound=3)
+		GPIO.output(21, GPIO.LOW)
+		GPIO.output(4, GPIO.LOW)
