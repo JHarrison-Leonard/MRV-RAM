@@ -12,13 +12,13 @@ import subprocess
 module_usb_port = "1-1.2:1.0" # Bottom USB 3.0 port
 
 # Module executables directory
-module_bin_path = "/home/pi/modules/"
+module_bin_path = "/home/jhleonard/Documents/Programming/MRV-RAM/modules/"
 
-# Serial communication probe string
+# Serial communication probe string for asking for the module's name when connected
 module_probe_string = b"Module?\n"
 
 # Serial communications settings
-serial_buad_rate = 19200
+serial_baud_rate = 19200
 serial_parity    = serial.PARITY_NONE
 serial_stopbits  = serial.STOPBITS_ONE
 serial_bytesize  = serial.EIGHTBITS
@@ -31,18 +31,14 @@ serial_timeout   = 0.01 #seconds
 def port_scan():
 	scan = serial_find.comports()
 	for ser in scan:
-		if ser.location is module_usb_port:
+		if ser.location == module_usb_port:
 			return ser
 	return None
 
 # TODO serial_probe documentation
-def serial_probe(serial_device_path):
-	try:
-		ser = serial_build(serial_device_path)
-		ser.write(module_probe_string)
-		return ser.readline().decode("utf-8").rstrip()
-	except (serial.SerialException, BrokenPipeError) as e:
-		return None
+def serial_probe(serial_device):
+	serial_device.write(module_probe_string)
+	return serial_device.readline().decode("utf-8").rstrip()
 
 # TODO serial_build documentation
 def serial_build(serial_device_path):
@@ -60,10 +56,16 @@ def serial_build(serial_device_path):
 while True:
 	module_device_info = port_scan()
 	if module_device_info is not None:
-		module_name = serial_probe(module_device_info.device)
-		if module_name is not None:
+		ser = None
+		module_name = ""
+		try:
 			ser = serial_build(module_device_info.device)
+			while module_name == "":
+				module_name = serial_probe(ser)
+		except serial.SerialException as e:
+			pass
+		else:
 			try:
-				subprocess.run([module_bin_path + module_name], stdin=ser, stdout=ser)
+				subprocess.run([module_bin_path + module_name + "/" + module_name], stdin=ser, stdout=ser, encoding="utf-8")
 			except (serial.SerialException, BrokenPipeError) as e:
 				pass
