@@ -1,2 +1,2 @@
 # MRV-RAM
-Module Remote Vehicle - Robotic Arm Module
+Modular Remote Vehicle - Robotic Arm Module
