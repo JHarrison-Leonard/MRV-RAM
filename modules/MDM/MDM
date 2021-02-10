@@ -1,15 +1,25 @@
 #!/usr/bin/python3
 
 import beepy
+import sys
 
+def read():
+	out = ""
+	while out == "":
+		out = sys.stdin.readline()
+	return out
 
 # MDM module handshake
-ready = input(b"Recognized\n")
+print("Recognized")
+ready = read()
 
 if ready == "Ready":
 	while True:
-		detect = input(b"Metal?\n")
+		print("Metal?")
+		detect = read()
 		if detect == "Detected":
 			beepy.beep(sound=1)
 		else:
 			beepy.beep(sound=3)
+
+raise BaseException(ready)
