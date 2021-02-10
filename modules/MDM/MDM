@@ -1,25 +1,60 @@
 #!/usr/bin/python3
 
-import beepy
-import sys
+# Piped serial demonstrational rewrite of MDM manager logic
+# by Justin Leonard with team "They Might be Heisenberg"
 
+# The purpose of this program is to both make Team Rhodium's MDM compatabile
+# with the updated ModuleComm.py script, ModuleCommv2, but also to document
+# some of the quirks involved with writing module manager code making use
+# of a piped serial IO stream.
+
+import beepy # Used for debug
+import sys # Used by read()
+
+
+
+# Easy to use read input function. The builtin python input function has some quirks that do
+# not work well with piping the serial interface to stdin.
 def read():
 	out = ""
 	while out == "":
-		out = sys.stdin.readline()
+		out = sys.stdin.readline().rstrip()
 	return out
 
+# Replacement for builtin python input function. Writes message to stdout and reads a line
+# from stdin.
+def trade(message):
+	print(message)
+	return read()
+
+
+
+# Arguments
+# All modules are expected to accept "type" as an argument and print it's module manager
+# type then immediately close.
+for i, arg in enumerate(sys.argv[1:]):
+	if arg == "type":
+		print("piped serial")
+		quit()
+	else:
+		print("Unexpected argument:", arg, file=sys.stderr)
+		quit()
+
+
+
 # MDM module handshake
-print("Recognized")
-ready = read()
+# Due to some quirks with input buffering, the first read will generally not obtain complete
+# inputs. Module managers should wait until a full response is obtained with 
+# trade() or read()
+while trade("Recognized") != "Ready":
+	pass
 
-if ready == "Ready":
-	while True:
-		print("Metal?")
-		detect = read()
-		if detect == "Detected":
-			beepy.beep(sound=1)
-		else:
-			beepy.beep(sound=3)
-
-raise BaseException(ready)
+# MDM logic
+# At this point, whatever issues there are with the buffer have fixed themselves and lines
+# from stdin can be freely read using trade() and read()
+while True:
+	detect = trade("Metal?")
+	if detect == "Detected":
+		beepy.beep(sound=1)
+	elif detect == "None":
+		beepy.beep(sound=3)
