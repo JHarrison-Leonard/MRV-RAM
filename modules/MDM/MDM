@@ -1,0 +1,15 @@
+#!/usr/bin/python3
+
+import beepy
+
+
+# MDM module handshake
+ready = input(b"Recognized\n")
+
+if ready == "Ready":
+	while True:
+		detect = input(b"Metal?\n")
+		if detect == "Detected":
+			beepy.beep(sound=1)
+		else:
+			beepy.beep(sound=3)
