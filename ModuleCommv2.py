@@ -12,7 +12,7 @@ import subprocess
 module_usb_port = "1-1.2:1.0" # Bottom USB 3.0 port
 
 # Module executables directory
-module_bin_path = "/home/jhleonard/Documents/Programming/MRV-RAM/modules/"
+module_bin_path = "/usr/local/MRV/modules"
 
 # Serial communication probe string for asking for the module's name when connected
 module_probe_string = b"Module?\n"
