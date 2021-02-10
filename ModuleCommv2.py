@@ -52,7 +52,7 @@ def serial_build(serial_device_path):
 
 
 
-# Main loop
+# TODO document
 while True:
 	module_device_info = port_scan()
 	if module_device_info is not None:
@@ -65,4 +65,22 @@ while True:
 		except serial.SerialException as e:
 			pass
 		else:
-			subprocess.run([module_bin_path + module_name + "/" + module_name], stdin=ser, stdout=ser, encoding="utf-8")
+			print("Module connected:", module_name)
+			
+			module_manager_path = module_bin_path + module_name + "/" + module_name
+			module_manager_type = subprocess.check_output([module_manager_path, "type"]).rstrip().decode("utf-8")
+			
+			if module_manager_type == "piped serial":
+				print("Module manager type:", module_manager_type)
+				subprocess.call([module_manager_path], stdin=ser, stdout=ser, stderr=subprocess.DEVNULL, encoding="utf-8")
+				ser.close()
+				
+			elif module_manager_type == "full serial":
+				print("Module manager type:", module_manager_type)
+				ser.close()
+				subprocess.call([module_manager_path, "--serial-path", module_device_info.device])
+				
+			else:
+				print("Unknown module manager type:", module_manager_type)
+			
+			print("Module disconnected")
