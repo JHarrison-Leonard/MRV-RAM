@@ -65,7 +65,4 @@ while True:
 		except serial.SerialException as e:
 			pass
 		else:
-			try:
-				subprocess.run([module_bin_path + module_name + "/" + module_name], stdin=ser, stdout=ser, encoding="utf-8")
-			except (serial.SerialException, BrokenPipeError) as e:
-				pass
+			subprocess.run([module_bin_path + module_name + "/" + module_name], stdin=ser, stdout=ser, encoding="utf-8")
