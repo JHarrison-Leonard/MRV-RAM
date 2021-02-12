@@ -1,6 +1,21 @@
 #!/usr/bin/python3
 
-# Rewritten module
+# Rewritten module communication manager code for MRV
+# by Justin Leonard with team "They Might be Heisenberg"
+
+# This code manages the serial communication with the modules connected to
+# the MRV. It constantly searches for a serial device connected to the
+# USB port that the leads to the enclosure housing. When a serial device
+# is connected, it probes the device to ask for its name. It then asks the
+# prgram that handles that module for a communication type and passes
+# through the serial communication accordingly.
+# There are currently two types of pass through:
+# - "piped serial"
+# -- Pipes the serial filestream through to the programs stdin and stdout
+# -- Has some quirks addressed in the MDM demo code modules/MDM/MDM
+# - "full serial"
+# -- Passes the serial device as an argument to the program
+# -- Program has to initialize serial device itself
 
 import serial
 import serial.tools.list_ports as serial_find # For comports()
@@ -35,12 +50,15 @@ def port_scan():
 			return ser
 	return None
 
-# TODO serial_probe documentation
+# Given an instantiated serial device, attempts to send the module_probe_string and
+# read the result, which is expected to be the name of the module
 def serial_probe(serial_device):
 	serial_device.write(module_probe_string)
 	return serial_device.readline().decode("utf-8").rstrip()
 
-# TODO serial_build documentation
+# Function to instantiate a serial device given it's path and using values defined
+# under Serial communication settings. This is really just to keep this massive
+# block of macros out of readable code.
 def serial_build(serial_device_path):
 	return serial.Serial(
 			port     = serial_device_path,
@@ -52,10 +70,13 @@ def serial_build(serial_device_path):
 
 
 
-# TODO document
+# Main loop. This code is never meant to close itself, therefore loops forever.
 while True:
 	module_device_info = port_scan()
 	if module_device_info is not None:
+		# Probe module until a response is supplied as the serial device will
+		# give empty strings until the module finishes booting.
+		# If there is an exception (device disconnected) restart scanning
 		ser = None
 		module_name = ""
 		try:
@@ -64,12 +85,15 @@ while True:
 				module_name = serial_probe(ser)
 		except serial.SerialException as e:
 			pass
+		
 		else:
 			print("Module connected:", module_name)
 			
+			# Obtain module manager type from it's associated program
 			module_manager_path = module_bin_path + module_name + "/" + module_name
 			module_manager_type = subprocess.check_output([module_manager_path, "type"]).rstrip().decode("utf-8")
 			
+			# Run module manager and pass through module how it expects
 			if module_manager_type == "piped serial":
 				print("Module manager type:", module_manager_type)
 				subprocess.call([module_manager_path], stdin=ser, stdout=ser, stderr=subprocces.DEVNULL)
