@@ -10,15 +10,15 @@
 
 import sys # Used by read()
 import RPi.GPIO as GPIO
-
+import time
 
 # Easy to use read input function. The builtin python input function has some quirks that do
 # not work well with piping the serial interface to stdin.
 def read():
 	out = ""
 	while out == "":
-		out = sys.stdin.readline().rstrip()
-	return out
+		out = sys.stdin.readline()
+	return out.rstrip()
 
 # Replacement for builtin python input function. Writes message to stdout and reads a line
 # from stdin.
@@ -40,23 +40,25 @@ for i, arg in enumerate(sys.argv[1:]):
 		quit()
 
 
-
 # MDM module handshake
 # Due to some quirks with input buffering, the first read will generally not obtain complete
 # inputs. Module managers should wait until a full response is obtained with 
-# trade() or read()
+# trade() or read().
 while trade("Recognized") != "Ready":
 	pass
 
+
 # MDM logic
 # At this point, whatever issues there are with the buffer have fixed themselves and lines
-# from stdin can be freely read using trade() and read()
+# from stdin can be freely read using trade() and read()*
+# * It is possible to read and write too quickly and lock up the serial interface, use
+# a delay with time.sleep if this happens.
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 GPIO.setup(21, GPIO.OUT)
 GPIO.setup(4, GPIO.OUT)
 GPIO.output(21, GPIO.LOW)
-GPIO.outpit(4, GPIO.LOW)
+GPIO.output(4, GPIO.LOW)
 
 while True:
 	detect = trade("Metal?")
@@ -66,3 +68,4 @@ while True:
 	elif detect == "None":
 		GPIO.output(21, GPIO.LOW)
 		GPIO.output(4, GPIO.LOW)
+	time.sleep(0.2)
