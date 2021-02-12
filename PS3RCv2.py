@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # Rewritten PS3 RC code for MRV
-# Justin Leonard with team "They Might be Heisenberg"
+# by Justin Leonard with team "They Might be Heisenberg"
 
 # This was written to replace the existing RC code for the MRV
 # Primary changes and general rundown:
