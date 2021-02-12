@@ -72,7 +72,7 @@ while True:
 			
 			if module_manager_type == "piped serial":
 				print("Module manager type:", module_manager_type)
-				subprocess.call([module_manager_path], stdin=ser, stdout=ser, stderr=subprocess.DEVNULL, encoding="utf-8")
+				subprocess.call([module_manager_path], stdin=ser, stdout=ser, stderr=subprocces.DEVNULL)
 				ser.close()
 				
 			elif module_manager_type == "full serial":
@@ -81,6 +81,7 @@ while True:
 				subprocess.call([module_manager_path, "--serial-path", module_device_info.device])
 				
 			else:
+				ser.close()
 				print("Unknown module manager type:", module_manager_type)
 			
 			print("Module disconnected")
