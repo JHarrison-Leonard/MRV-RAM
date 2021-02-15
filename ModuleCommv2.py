@@ -96,7 +96,7 @@ while True:
 			# Run module manager and pass through module how it expects
 			if module_manager_type == "piped serial":
 				print("Module manager type:", module_manager_type)
-				subprocess.call([module_manager_path], stdin=ser, stdout=ser, stderr=subprocces.DEVNULL)
+				subprocess.call([module_manager_path], stdin=ser, stdout=ser, stderr=subprocess.DEVNULL)
 				ser.close()
 				
 			elif module_manager_type == "full serial":
