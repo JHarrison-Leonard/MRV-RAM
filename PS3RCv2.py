@@ -27,14 +27,14 @@ GPIO_servo = 23 # GPIO 23, Pin 7
 
 
 # Controller MAC
-#controller_MAC = "00:19:C1:15:D9:F8" # MRV PS3 controller
-controller_MAC = "70:20:84:5E:F7:5E" # TMBH PS4 controller
+controller_MAC = "00:19:C1:15:D9:F8" # MRV PS3 controller
+#controller_MAC = "70:20:84:5E:F7:5E" # TMBH PS4 controller
 
 # Controller axis and button definitions
 controller_throttle = 1 # Forward and backward of left joystick
 controller_steer    = 2 # Left and right of right joystick
-#controller_turbo    = 10 # Front left bumper (L1) PS3
-controller_turbo    = 4 # Front left bumper (L1) PS4
+controller_turbo    = 10 # Front left bumper (L1) PS3
+#controller_turbo    = 4 # Front left bumper (L1) PS4
 controller_deadzone_upper = 0.3
 controller_deadzone_lower = -0.3
 
@@ -66,7 +66,6 @@ desired_pygame_events = [pygame.JOYAXISMOTION, pygame.JOYBUTTONDOWN, pygame.JOYB
 # The point of the retry is to 1) keep the function from overflowing from to many recursions
 # and 2) not overlap check_controller stacks when the controller_manager calls it after
 # controller_check_interval seconds later
-# TODO Check necessity of discon and associated logic, it might be pointless
 def check_controller(discon=False, attempts=0):
 	# Exit recursion if controller not connected after controller_check_interval seconds
 	if attempts >= controller_init_retry_max:
@@ -77,7 +76,6 @@ def check_controller(discon=False, attempts=0):
 	joystick_count=pygame.joystick.get_count()
 	if not joystick_count:
 		if not discon:
-			print("Controller disconnected")
 			discon = True
 		time.sleep(controller_init_retry_interval)
 		check_controller(discon, attempts+1)
@@ -116,7 +114,7 @@ def speed_calc(axis_value, turbo):
 # at a rate of speed_change_max / speed_change_interval.
 # TODO Implement braking on coast. Wouldn't I need to be able to measure the velocity?
 #      This might be achieveable by designing an observer that approximates the velocity
-#      given target_speed.
+#      given target_speed. Low priority.
 def speed_manager(gpio_controller, event_queue):
 	turbo = False
 	target_axis = 0.0
@@ -236,6 +234,6 @@ def RCPi():
 
 
 
-# Run RCPi in a new thread
-thread_RCPi = threading.Thread(target=RCPi)
-thread_RCPi.start()
+# Run RCPi
+# If ever merged with ModuleCommv2.py, use treading to run in its own thread
+RCPi()
