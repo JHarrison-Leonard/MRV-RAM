@@ -66,7 +66,7 @@ desired_pygame_events = [pygame.JOYAXISMOTION, pygame.JOYBUTTONDOWN, pygame.JOYB
 # The point of the retry is to 1) keep the function from overflowing from to many recursions
 # and 2) not overlap check_controller stacks when the controller_manager calls it after
 # controller_check_interval seconds later
-def check_controller(discon=False, attempts=0):
+def init_controller(attempts=0):
 	# Exit recursion if controller not connected after controller_check_interval seconds
 	if attempts >= controller_init_retry_max:
 		return
@@ -75,10 +75,8 @@ def check_controller(discon=False, attempts=0):
 	pygame.joystick.init()
 	joystick_count=pygame.joystick.get_count()
 	if not joystick_count:
-		if not discon:
-			discon = True
 		time.sleep(controller_init_retry_interval)
-		check_controller(discon, attempts+1)
+		check_controller(attempts+1)
 	else:
 		for i in range(joystick_count):
 			joystick = pygame.joystick.Joystick(i)
@@ -90,8 +88,8 @@ def check_controller(discon=False, attempts=0):
 # I would like to use a proper library instead of subprocess with hcitool, but pybluez can't
 def controller_manager():
 	while True:
-		if not controller_MAC in subprocess.getoutput("hcitool con"):
-			check_controller()
+		if not controller_MAC in subprocess.getoutput("hcitool con") or pygame.joystick.get_count() == 0:
+			init_controller()
 		else:
 			time.sleep(controller_check_interval)
 
@@ -221,7 +219,7 @@ def RCPi():
 	pygame.event.set_allowed(desired_pygame_events)
 	
 	# Initialize controller
-	check_controller()
+	init_controller()
 	
 	# Call managers
 	thread_controller_manager = threading.Thread(target=controller_manager, daemon=True)
