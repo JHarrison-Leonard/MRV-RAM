@@ -58,7 +58,7 @@ motor_steer_left_weighting  = 355 # TODO play around with these, it turns really
 motor_steer_right_weighting = 370
 
 # pygame event whitelist
-desired_pygame_events = [pygame.JOYAXISMOTION, pygame.JOYBUTTONDOWN, pygame.JOYBUTTONUP, pygame.QUIT]
+desired_pygame_events = [pygame.JOYAXISMOTION, pygame.JOYBUTTONDOWN, pygame.JOYBUTTONUP]
 
 
 
@@ -165,14 +165,12 @@ def steer_event(event, gpio_controller):
 # listed in desired_pygame_events. If it is a JOYAXISMOTION event, places the event on speed_events
 # or calls steer_event if the axis is controller_throttle or controller_steer respectively.
 # Passes through JOYBUTTONDOWN and JOYBUTTONUP events to speed_events if the buttonis controller_turbo.
-# Exits loop on pygame.QUIT event.
 def event_manager(gpio_controller):
 	speed_events = queue.Queue()
 	thread_speed_manager = threading.Thread(target=speed_manager, args=(gpio_controller, speed_events), daemon=True)
 	thread_speed_manager.start()
 	
-	quit = False
-	while not quit:
+	while True:
 		event = pygame.event.wait()
 		if event.type is pygame.JOYAXISMOTION:
 			if event.axis is controller_throttle:
@@ -187,9 +185,6 @@ def event_manager(gpio_controller):
 		elif event.type is pygame.JOYBUTTONUP:
 			if event.button is controller_turbo:
 				speed_events.put(event)
-		
-		elif event.type is pygame.QUIT:
-			quit = True
 
 # Main function for remote control of MRV. Can run on it's own thread. Initializes pigpio object,
 # calibrates the ESC, initializes pygame, establishes the allowed pygame events, initializes the
