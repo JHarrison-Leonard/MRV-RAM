@@ -24,7 +24,7 @@ import subprocess
 
 
 # Module USB port definition
-module_usb_port = "1-1.2:1.0" # Bottom USB 3.0 port
+module_usb_port = "1-1.2" # Bottom USB 3.0 port
 
 # Module executables directory
 module_bin_path = "/usr/local/MRV/modules/"
@@ -46,7 +46,7 @@ serial_timeout   = 0.01 #seconds
 def port_scan():
 	scan = serial_find.comports()
 	for ser in scan:
-		if ser.location == module_usb_port:
+		if  module_usb_port in str(ser.location):
 			return ser
 	return None
 
