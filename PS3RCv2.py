@@ -76,7 +76,7 @@ def init_controller(attempts=0):
 	joystick_count=pygame.joystick.get_count()
 	if not joystick_count:
 		time.sleep(controller_init_retry_interval)
-		check_controller(attempts+1)
+		init_controller(attempts+1)
 	else:
 		for i in range(joystick_count):
 			joystick = pygame.joystick.Joystick(i)
@@ -147,7 +147,7 @@ def speed_manager(gpio_controller, event_queue):
 				pass
 		
 		current_speed += max(min(target_speed-current_speed, speed_change_max), -speed_change_max)
-		print(current_speed, target_speed)
+		#print("Current PWM:", current_speed, "Target PWM:", target_speed)
 		gpio_controller.set_servo_pulsewidth(GPIO_esc, current_speed)
 
 
@@ -220,10 +220,6 @@ def RCPi():
 	thread_controller_manager = threading.Thread(target=controller_manager, daemon=True)
 	thread_controller_manager.start()
 	event_manager(pi)
-	
-	# Clean up
-	pi.stop()
-	pygame.quit()
 
 
 
