@@ -88,24 +88,27 @@ while True:
 		
 		else:
 			print("Module connected:", module_name)
-			
-			# Obtain module manager type from it's associated program
-			module_manager_path = module_bin_path + module_name + "/" + module_name
-			module_manager_type = subprocess.check_output([module_manager_path, "type"]).rstrip().decode("utf-8")
-			
-			# Run module manager and pass through module how it expects
-			if module_manager_type == "piped serial":
-				print("Module manager type:", module_manager_type)
-				subprocess.call([module_manager_path], stdin=ser, stdout=ser, stderr=subprocess.DEVNULL)
+			if '\0' is in module_name or '/' is in module_name:
 				ser.close()
-				
-			elif module_manager_type == "full serial":
-				print("Module manager type:", module_manager_type)
-				ser.close()
-				subprocess.call([module_manager_path, "--serial-path", module_device_info.device])
-				
+				print("Invalid module name:", module_name)
 			else:
-				ser.close()
-				print("Unknown module manager type:", module_manager_type)
+				# Obtain module manager type from it's associated program
+				module_manager_path = module_bin_path + module_name + "/" + module_name
+				module_manager_type = subprocess.check_output([module_manager_path, "type"]).rstrip().decode("utf-8")
+				
+				# Run module manager and pass through module how it expects
+				if  module_manager_type == "piped serial":
+					print("Module manager type:", module_manager_type)
+					subprocess.call([module_manager_path], stdin=ser, stdout=ser, stderr=subprocess.DEVNULL)
+					ser.close()
+					
+				elif module_manager_type == "full serial":
+					print("Module manager type:", module_manager_type)
+					ser.close()
+					subprocess.call([module_manager_path, "--serial-path", module_device_info.device])
+					
+				else:
+					ser.close()
+					print("Unknown module manager type:", module_manager_type)
 			
 			print("Module disconnected")
