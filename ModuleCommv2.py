@@ -88,7 +88,7 @@ while True:
 		
 		else:
 			print("Module connected:", module_name)
-			if '\0' is in module_name or '/' is in module_name:
+			if '\0' in module_name or '/' in module_name:
 				ser.close()
 				print("Invalid module name:", module_name)
 			else:
