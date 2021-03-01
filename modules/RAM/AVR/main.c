@@ -33,7 +33,7 @@ int main()
 			switch(input[0])
 			{
 				case SHOULDER_THETA_CHAR:
-					set_shoulder_theta(atoi(input + 1))
+					set_shoulder_theta(atoi(input + 1));
 					break;
 			}
 		}
