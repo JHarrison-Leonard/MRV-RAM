@@ -25,10 +25,13 @@ main.o: main.c main.h serialIO.h
 serialIO.o: serialIO.c serialIO.h
 
 
+deploy:
+	avrdude -v -V -p atmega328p -c arduino -P /dev/ttyACM0 -b 115200 -D -U flash:w:$(PRG).hex:i
+
+
 clean:
 	rm -rf *.o $(PRG).elf
 	rm -rf *.hex *.map
-
 
 hex:  $(PRG).hex
 
