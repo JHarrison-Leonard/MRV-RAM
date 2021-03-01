@@ -28,8 +28,15 @@ int main()
 		
 		if(strcmp(input, MODULE_PROBE_STRING))
 			printf("%s\n", MODULE_NAME);
-		
-		
+		else
+		{
+			switch(input[0])
+			{
+				case SHOULDER_THETA_CHAR:
+					set_shoulder_theta(atoi(input + 1))
+					break;
+			}
+		}
 	}
 }
 
@@ -51,5 +58,6 @@ void initialize_PWM()
 
 void set_shoulder_theta(uint16_t width)
 {
-	OCR1A = ICR1 - 2*SAT(SHOULDER_THETA_MIN, width, SHOULDER_THETA_MAX) - 1;
+	if(SHOULDER_THETA_MIN <= width && width <= SHOULDER_THETA_MAX)
+		OCR1A = ICR1 - 2*width - 1;
 }
