@@ -1,3 +1,195 @@
 #!/usr/bin/python3
 
+# Module specific code for RAM
+# by Justin Leonard with team "They Might be Heisenberg"
 
+import time
+import threading
+import queue
+import subprocess
+import sys
+import os
+
+# Have to go through a lot of work to hush pygames plug
+devnull = open(os.devnull, 'w')
+oldout = sys.stdout
+sys.stdout = devnull
+import pygame
+sys.stdout =oldout
+
+
+
+# Controller code stolen straight from PS3RCv2.py
+# Controller MAC
+#controller_MAC = "00:19:C1:15:D9:F8" # MRV PS3 controller
+controller_MAC = "70:20:84:5E:F7:5E" # TMBH PS4 controller
+
+# Conroller axis and button definitions
+controller_shoulder_turn_left = 0 # TODO Left dpad (currently square)
+controller_shoulder_turn_right = 2 # TODO Right dpad (currently circle
+
+# Controller check interval/rate
+controller_check_interval = 10 #seconds
+controller_init_retry_interval = 0.2 #seconds
+controller_init_retry_max = controller_check_interval / controller_init_retry_interval
+
+# pygame event whitelist
+desired_pygame_events = [pygame.JOYBUTTONDOWN, pygame.JOYBUTTONUP]
+
+# Change manager definitions
+change_update_rate = 0.05 #seconds
+
+# Comm manager definitions
+comm_update_rate = 0.025 #seconds  Must be greater than change_update_rate
+shoulder_turn_char = 'S'
+
+# Servo pulsewidth definitions
+shoulder_turn_min = 1000 #microseconds
+shoulder_turn_max = 2000 #microseconds
+shoulder_turn_center = 1500 #microseconds
+shoulder_turn_rate = 500 #microseconds per second
+
+
+# Initializes controller, if there is one
+def init_controller(attempts=0):
+	if attempts >= controller_init_retry_max:
+		return
+	
+	pygame.joystick.quit()
+	pygame.joystick.init()
+	joystick_count=pygame.joystick.get_count()
+	if not joystick_count:
+		time.sleep(controller_init_retry_interval)
+		init_controller(attempts+1)
+	else:
+		for i in range(joystick_count):
+			joystick = pygame.joystick.Joystick(i)
+			joystick.init()
+
+
+# To be ran in it's own thread. Keeps the controller initialized
+def controller_manager():
+	while True:
+		if not controller_MAC in subprocess.getoutput("hcitool con") or pygame.joystick.get_count() == 0:
+			init_controller()
+		else:
+			time.sleep(controller_check_interval)
+
+
+
+# read and trade functions stolen straight from MDM demo code
+def read():
+	out = ""
+	while out == "":
+		out = sys.stdin.readline()
+	return out.rstrip()
+
+def trade(message):
+	print(message)
+	return read()
+
+
+
+# RAM specific functions
+# Function designed to run on the same thread that pygame was intiialized in. Waits for an event
+# list in desired pygame_event. Forwards digital inputs to change_manager. Calculates pulse width
+# commands and forwards to comm_manager for analog inputs.
+def event_manager():
+	comm_events = queue.Queue()
+	thread_comm_manager = threading.Thread(target=comm_manager, args=(comm_events,), daemon=True)
+	thread_comm_manager.start()
+	
+	change_events = queue.Queue()
+	thread_change_manager = threading.Thread(target=change_manager, args=(change_events, comm_events), daemon=True)
+	thread_change_manager.start()
+	
+	while True:
+		event = pygame.event.wait()
+		if event.type is pygame.JOYBUTTONDOWN:
+			if event.button is controller_shoulder_turn_left:
+				change_events.put(event)
+			elif event.button is controller_shoulder_turn_right:
+				change_events.put(event)
+		
+		if event.type is pygame.JOYBUTTONUP:
+			if event.button is controller_shoulder_turn_left:
+				change_events.put(event)
+			elif event.button is controller_shoulder_turn_right:
+				change_events.put(event)
+
+#
+def change_manager(event_queue, comm_queue):
+	current_turn = shoulder_turn_center
+	turning = 0
+	
+	while True:
+		if not turning:
+			event = event_queue.get()
+			if event.type is pygame.JOYBUTTONDOWN:
+				if event.button == controller_shoulder_turn_left:
+					turning = -1
+				elif event.button == controller_shoulder_turn_right:
+					turning = 1
+			elif event.type is pygame.JOYBUTTONUP:
+				if event.button == controller_shoulder_turn_left or event.button == controller_shoulder_turn_right:
+					turning = 0
+			event_queue.task_done()
+			
+		else:
+			time.sleep(change_update_rate)
+			try:
+				event = event_queue.get_nowait()
+				if event.type is pygame.JOYBUTTONDOWN:
+					if event.button == controller_shoulder_turn_left:
+						turning = -1
+					elif event.button == controller_shoulder_turn_right:
+						turning = 1
+				elif event.type is pygame.JOYBUTTONUP:
+					if event.button == controller_shoulder_turn_left or event.button == controller_shoulder_turn_right:
+						turning = 0
+				event_queue.task_done()
+			except queue.Empty as e:
+				pass
+		
+		if turning != 0:
+			current_turn = max(min(current_turn + turning * shoulder_turn_rate * change_update_rate, shoulder_turn_max), shoulder_turn_min)
+			comm_queue.put(shoulder_turn_char + str(int(current_turn)))
+
+#
+def comm_manager(comm_queue):
+	while True:
+		print(comm_queue.get())
+		time.sleep(comm_update_rate)
+
+
+
+# Handle arguments
+for i, arg in enumerate(sys.argv[1:]):
+	if arg == "type":
+		print("piped serial")
+		quit()
+	else:
+		print("Unexpected argument:", arg, file=sys.stderr())
+		quit()
+
+
+# Wait until piped serial is functional
+while trade("Module?") != "RAM":
+	pass
+
+
+
+# RAM logic
+# Initialize pygame
+pygame.init()
+# Set list of events allowed in event queue to desiried_events
+pygame.event.set_blocked(None) # Blocks all events
+pygame.event.set_allowed(desired_pygame_events)
+
+# Initialize controller
+init_controller()
+
+# Call managers
+thread_controller_manager = threading.Thread(target=controller_manager, daemon=True)
+thread_controller_manager.start()
+event_manager()
