@@ -20,7 +20,7 @@
 import serial
 import serial.tools.list_ports as serial_find # For comports()
 import subprocess
-
+import time
 
 
 # Module USB port definition
@@ -108,7 +108,10 @@ while True:
 				# Run module manager and pass through module how it expects
 				if  module_manager_type == "piped serial":
 					print("Module manager type:", module_manager_type)
-					subprocess.call([module_manager_path], stdin=ser, stdout=ser, stderr=subprocess.DEVNULL)
+					p = subprocess.Popen([module_manager_path], stdin=ser, stdout=ser)
+					while port_scan() is not None and p.poll() is None:
+						pass # Loops until module is disconnected or manager closes
+					p.kill()
 					ser.close()
 					
 				elif module_manager_type == "full serial":
