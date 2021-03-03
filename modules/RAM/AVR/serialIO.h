@@ -3,14 +3,15 @@
 #include <stdio.h>
 
 /* Simple serial IO implementation
- *
- *
+ * 
+ * By including and adding initialize_UART(), enables serial communication
+ * over stdin and stdout, allowing for use of standard C IO methods.
  */
 
 
 
 /* stdio compatiable file stream structures
- * Allows for use of functions like readline for easier IO
+ * Allows for use of functions like gets for easier IO
  */
 FILE out_UART;
 FILE in_UART;
