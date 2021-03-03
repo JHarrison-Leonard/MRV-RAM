@@ -11,6 +11,7 @@ import sys
 import os
 
 # Have to go through a lot of work to hush pygames plug
+# It's support message annoyingly infects stdout, which is piped to the module
 devnull = open(os.devnull, 'w')
 oldout = sys.stdout
 sys.stdout = devnull
@@ -19,10 +20,10 @@ sys.stdout =oldout
 
 
 
-# Controller code stolen straight from PS3RCv2.py
+## Controller code stolen straight from PS3RCv2.py
 # Controller MAC
-#controller_MAC = "00:19:C1:15:D9:F8" # MRV PS3 controller
-controller_MAC = "70:20:84:5E:F7:5E" # TMBH PS4 controller
+controller_MAC = "00:19:C1:15:D9:F8" # MRV PS3 controller
+#controller_MAC = "70:20:84:5E:F7:5E" # TMBH PS4 controller
 
 # Conroller axis and button definitions
 controller_shoulder_turn_left = 0 # TODO Left dpad (currently square)
@@ -90,7 +91,7 @@ def trade(message):
 
 
 
-# RAM specific functions
+## RAM specific functions
 # Function designed to run on the same thread that pygame was intiialized in. Waits for an event
 # list in desired pygame_event. Forwards digital inputs to change_manager. Calculates pulse width
 # commands and forwards to comm_manager for analog inputs.
@@ -117,7 +118,10 @@ def event_manager():
 			elif event.button is controller_shoulder_turn_right:
 				change_events.put(event)
 
-#
+# Function designed to run in its own thread. Taking pygame button events sent over event_queue,
+# keeps track of and manages the pulsewidth commands to be sent to the module via comm_manager.
+# For the shoulder turn servo, turns left if controller_shoulder_turn_left is held and turns
+# right if controller_shoulder_turn_right is held.
 def change_manager(event_queue, comm_queue):
 	current_turn = shoulder_turn_center
 	turning = 0
@@ -127,9 +131,9 @@ def change_manager(event_queue, comm_queue):
 			event = event_queue.get()
 			if event.type is pygame.JOYBUTTONDOWN:
 				if event.button == controller_shoulder_turn_left:
-					turning = -1
-				elif event.button == controller_shoulder_turn_right:
 					turning = 1
+				elif event.button == controller_shoulder_turn_right:
+					turning = -1
 			elif event.type is pygame.JOYBUTTONUP:
 				if event.button == controller_shoulder_turn_left or event.button == controller_shoulder_turn_right:
 					turning = 0
@@ -141,9 +145,9 @@ def change_manager(event_queue, comm_queue):
 				event = event_queue.get_nowait()
 				if event.type is pygame.JOYBUTTONDOWN:
 					if event.button == controller_shoulder_turn_left:
-						turning = -1
-					elif event.button == controller_shoulder_turn_right:
 						turning = 1
+					elif event.button == controller_shoulder_turn_right:
+						turning = -1
 				elif event.type is pygame.JOYBUTTONUP:
 					if event.button == controller_shoulder_turn_left or event.button == controller_shoulder_turn_right:
 						turning = 0
@@ -151,11 +155,17 @@ def change_manager(event_queue, comm_queue):
 			except queue.Empty as e:
 				pass
 		
+		# Building command string
+		command = ""
 		if turning != 0:
 			current_turn = max(min(current_turn + turning * shoulder_turn_rate * change_update_rate, shoulder_turn_max), shoulder_turn_min)
-			comm_queue.put(shoulder_turn_char + str(int(current_turn)))
+			command = shoulder_turn_char + str(int(current_turn))
+		
+		# Send command string
+		comm_queue.put(command)
 
-#
+# Function designed to run in its own thread. Sends strings sent through comm_queue over the stdout
+# at a limited rate to keep from locking up the serial interface.
 def comm_manager(comm_queue):
 	while True:
 		print(comm_queue.get())
@@ -188,8 +198,9 @@ pygame.event.set_allowed(desired_pygame_events)
 
 # Initialize controller
 init_controller()
-
-# Call managers
+# Controller manager
 thread_controller_manager = threading.Thread(target=controller_manager, daemon=True)
 thread_controller_manager.start()
+
+# Main RAM logic
 event_manager()
