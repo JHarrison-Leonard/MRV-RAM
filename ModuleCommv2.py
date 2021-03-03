@@ -32,6 +32,9 @@ module_bin_path = "/usr/local/MRV/modules/"
 # Serial communication probe string for asking for the module's name when connected
 module_probe_string = b"Module?\n"
 
+# Probe delay to keep from occasionally locking up the serial interface
+module_probe_interval = 0.01 #seconds
+
 # Serial communications settings
 serial_baud_rate = 19200
 serial_parity    = serial.PARITY_NONE
@@ -83,14 +86,20 @@ while True:
 			ser = serial_build(module_device_info.device)
 			while module_name == "":
 				module_name = serial_probe(ser)
+				time.sleep(module_probe_interval)
 		except serial.SerialException as e:
 			pass
 		
 		else:
 			print("Module connected:", module_name)
+			
+			# Checks the module name for backslash and null characters, which
+			# are illegal in linux file names. This keeps a module from executing
+			# arbitrary code on the system.
 			if '\0' in module_name or '/' in module_name:
 				ser.close()
 				print("Invalid module name:", module_name)
+				
 			else:
 				# Obtain module manager type from it's associated program
 				module_manager_path = module_bin_path + module_name + "/" + module_name
