@@ -19,8 +19,22 @@
 
 int main();
 
+/* Initializes clocks, PWM pins, and intial pulse widths to drive servos
+ * Registers effected:
+ * TCCR1A
+ * TCCR1B
+ * ICR1
+ * DDRB
+ * OCR1A
+ */
 void initialize_PWM();
 
+/* Safely sets pulsewidth of shoulder turn servo
+ * Registers effected:
+ * OCR1A
+ * Inputs:
+ * width - pulse width in microseconds
+ */
 void set_shoulder_theta(uint16_t width);
 
 

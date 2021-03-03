@@ -25,12 +25,15 @@ int main()
 	// Main loop
 	for(;;)
 	{
+		// Get serial input
 		gets(input);
 		
+		// Respond with MODULE_NAME if it probes
 		if(!strcmp(input, MODULE_PROBE_STRING))
 			printf("%s\n", MODULE_NAME);
 		else
 		{
+			// Change servo pulsewidth given servo select character
 			switch(input[0])
 			{
 				case SHOULDER_THETA_CHAR:
@@ -59,6 +62,7 @@ void initialize_PWM()
 
 void set_shoulder_theta(uint16_t width)
 {
+	// Don't change pulsewidth if width is outside of safe bounds
 	if(SHOULDER_THETA_MIN <= width && width <= SHOULDER_THETA_MAX)
 		OCR1A = ICR1 - 2*width - 1;
 }
