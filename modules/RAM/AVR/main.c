@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <avr/io.h>
 #include <string.h>
@@ -26,7 +27,7 @@ int main()
 	{
 		gets(input);
 		
-		if(strcmp(input, MODULE_PROBE_STRING))
+		if(!strcmp(input, MODULE_PROBE_STRING))
 			printf("%s\n", MODULE_NAME);
 		else
 		{
