@@ -22,8 +22,8 @@ sys.stdout =oldout
 
 ## Controller code stolen straight from PS3RCv2.py
 # Controller MAC
-controller_MAC = "00:19:C1:15:D9:F8" # MRV PS3 controller
-#controller_MAC = "70:20:84:5E:F7:5E" # TMBH PS4 controller
+#controller_MAC = "00:19:C1:15:D9:F8" # MRV PS3 controller
+controller_MAC = "70:20:84:5E:F7:5E" # TMBH PS4 controller
 
 # Conroller axis and button definitions
 controller_shoulder_turn_left = 0 # TODO Left dpad (currently square)
@@ -45,8 +45,8 @@ comm_update_rate = 0.025 #seconds  Must be greater than change_update_rate
 shoulder_turn_char = 'S'
 
 # Servo pulsewidth definitions
-shoulder_turn_min = 1000 #microseconds
-shoulder_turn_max = 2000 #microseconds
+shoulder_turn_min = 800 #microseconds
+shoulder_turn_max = 2200 #microseconds
 shoulder_turn_center = 1500 #microseconds
 shoulder_turn_rate = 500 #microseconds per second
 
