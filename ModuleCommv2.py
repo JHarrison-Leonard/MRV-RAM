@@ -110,7 +110,7 @@ while True:
 					print("Module manager type:", module_manager_type)
 					p = subprocess.Popen([module_manager_path], stdin=ser, stdout=ser)
 					while port_scan() is not None and p.poll() is None:
-						pass # Loops until module is disconnected or manager closes
+						time.sleep(module_probe_interval) # Loops until module is disconnected or manager closes
 					p.kill()
 					ser.close()
 					
