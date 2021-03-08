@@ -37,7 +37,7 @@ int main()
 			switch(input[0])
 			{
 				case SHOULDER_THETA_CHAR:
-					set_shoulder_theta(atoi(input + 1));
+					set_shoulder_turn(atoi(input + 1));
 					break;
 			}
 		}
@@ -57,12 +57,12 @@ void initialize_PWM()
 	// Initialize shoulder theta pwm
 	DDRB |= _BV(PORTB1);                           // Pin 9 out
 	TCCR1A |= _BV(COM1A1) | _BV(COM1A0);           // Inverting pulse (off then on)
-	OCR1A = ICR1 - 2*(SHOULDER_THETA_DEFAULT) - 1; // Default pulse width
+	OCR1A = ICR1 - 2*(SHOULDER_TURN_DEFAULT) - 1; // Default pulse width
 }
 
-void set_shoulder_theta(uint16_t width)
+void set_shoulder_turn(uint16_t width)
 {
 	// Don't change pulsewidth if width is outside of safe bounds
-	if(SHOULDER_THETA_MIN <= width && width <= SHOULDER_THETA_MAX)
+	if(SHOULDER_TURN_MIN <= width && width <= SHOULDER_TURN_MAX)
 		OCR1A = ICR1 - 2*width - 1;
 }

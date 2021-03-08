@@ -12,9 +12,9 @@
 #define SERVO_FREQUENCY 50 //Hz
 
 // Shoulder theta pulse width definitions in microseconds (us)
-#define SHOULDER_THETA_MIN 1000
-#define SHOULDER_THETA_MAX 2000
-#define SHOULDER_THETA_DEFAULT 1500
+#define SHOULDER_TURN_MIN 800
+#define SHOULDER_TURN_MAX 2200
+#define SHOULDER_TURN_DEFAULT 1500
 
 
 int main();
@@ -35,7 +35,7 @@ void initialize_PWM();
  * Inputs:
  * width - pulse width in microseconds
  */
-void set_shoulder_theta(uint16_t width);
+void set_shoulder_turn(uint16_t width);
 
 
 #endif
