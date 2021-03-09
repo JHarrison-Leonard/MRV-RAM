@@ -48,7 +48,7 @@ shoulder_char = 'S'
 shoulder_min = 800 #microseconds
 shoulder_max = 2200 #microseconds
 shoulder_center = 1500 #microseconds
-shoulder_rate = 250 #microseconds per second
+shoulder_rate = 1000 #microseconds per second
 
 
 # Initializes controller, if there is one
