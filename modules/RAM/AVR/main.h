@@ -7,14 +7,14 @@
 #define MODULE_PROBE_STRING "Module?"
 #define MODULE_NAME "RAM"
 
-#define SHOULDER_THETA_CHAR 'S'
+#define SHOULDER_CHAR 'S'
 
 #define SERVO_FREQUENCY 50 //Hz
 
-// Shoulder theta pulse width definitions in microseconds (us)
-#define SHOULDER_TURN_MIN 800
-#define SHOULDER_TURN_MAX 2200
-#define SHOULDER_TURN_DEFAULT 1500
+// Shoulder pulse width definitions in microseconds (us)
+#define SHOULDER_MIN 800
+#define SHOULDER_MAX 2200
+#define SHOULDER_DEFAULT 1500
 
 
 int main();
@@ -35,7 +35,7 @@ void initialize_PWM();
  * Inputs:
  * width - pulse width in microseconds
  */
-void set_shoulder_turn(uint16_t width);
+void set_shoulder(uint16_t width);
 
 
 #endif

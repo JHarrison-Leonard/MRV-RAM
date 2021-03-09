@@ -36,8 +36,8 @@ int main()
 			// Change servo pulsewidth given servo select character
 			switch(input[0])
 			{
-				case SHOULDER_THETA_CHAR:
-					set_shoulder_turn(atoi(input + 1));
+				case SHOULDER_CHAR:
+					set_shoulder(atoi(input + 1));
 					break;
 			}
 		}
@@ -54,15 +54,15 @@ void initialize_PWM()
 	TCCR1B |= _BV(CS11);                  // <-/
 	ICR1 = (F_CPU / 8) / SERVO_FREQUENCY; // Sets time 1 TOP to get 20 ms period
 	
-	// Initialize shoulder theta pwm
+	// Initialize shoulder pwm
 	DDRB |= _BV(PORTB1);                           // Pin 9 out
 	TCCR1A |= _BV(COM1A1) | _BV(COM1A0);           // Inverting pulse (off then on)
-	OCR1A = ICR1 - 2*(SHOULDER_TURN_DEFAULT) - 1; // Default pulse width
+	OCR1A = ICR1 - 2*(SHOULDER_DEFAULT) - 1; // Default pulse width
 }
 
-void set_shoulder_turn(uint16_t width)
+void set_shoulder(uint16_t width)
 {
 	// Don't change pulsewidth if width is outside of safe bounds
-	if(SHOULDER_TURN_MIN <= width && width <= SHOULDER_TURN_MAX)
+	if(SHOULDER_MIN <= width && width <= SHOULDER_MAX)
 		OCR1A = ICR1 - 2*width - 1;
 }
