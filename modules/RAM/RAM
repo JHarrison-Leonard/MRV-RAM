@@ -158,8 +158,10 @@ def change_manager(event_queue, comm_queue):
 		# Building command string
 		command = ""
 		if shoulder != 0:
-			current_shoulder = max(min(current_shoulder + shoulder * shoulder_rate * change_update_rate, shoulder_max), shoulder_min)
-			command += shoulder_char + str(int(current_shoulder))
+			next_shoulder = max(min(current_shoulder + shoulder * shoulder_rate * change_update_rate, shoulder_max), shoulder_min)
+			if next_shoulder != current_shoulder:
+				current_shoulder = next_shoulder
+				command += shoulder_char + str(int(current_shoulder))
 		
 		# Send command string
 		if command:
