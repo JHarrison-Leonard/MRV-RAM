@@ -47,17 +47,33 @@ int main()
 
 void initialize_PWM()
 {
-	// Initialize 16-bit clock
-	TCCR1A |= _BV(WGM11);                 // <-- Sets timer 1 to fast PWM mode
+	// Initialize 8-bit clock 0
+	TCCR0A |= _BV(WGM01) | _BV(WGM00);
+	TCCR0B |= _BV(WGM02);
+	// TODO Need to use clock 2 interrupts to change T0
+	// to get finer control of clock 0 to get a 20 ms period
+	
+	// Initialize 16-bit clock 1
+	TCCR1A &= ~_BV(WGM10);                // <-- Sets timer 1 to fast PWM mode
+	TCCR1A |= _BV(WGM11);                 //   | with TOP equaling ICR1
 	TCCR1B |= _BV(WGM13) | _BV(WGM12);    // <-/
 	TCCR1B &= ~_BV(CS10);                 // <-- Sets prescaler to 1/8
 	TCCR1B |= _BV(CS11);                  // <-/
-	ICR1 = (F_CPU / 8) / SERVO_FREQUENCY; // Sets time 1 TOP to get 20 ms period
+	ICR1 = (F_CPU / 8) / SERVO_FREQUENCY; // Sets timer 1 TOP to get 20 ms period
 	
 	// Initialize shoulder pwm
-	DDRB |= _BV(PORTB1);                           // Pin 9 out
-	TCCR1A |= _BV(COM1A1) | _BV(COM1A0);           // Inverting pulse (off then on)
+	DDRB |= _BV(PORTB1);                     // Pin 9 out
+	TCCR1A |= _BV(COM1A1) | _BV(COM1A0);     // Inverting pulse (off then on)
 	OCR1A = ICR1 - 2*(SHOULDER_DEFAULT) - 1; // Default pulse width
+	
+	// Initialize elbow pwm
+	DDRB |= _BV(PORTB2);                  // Pin 10 out
+	TCCR1A |= _BV(COM1B1) | _BV(COM1B0);  // Inverting pulse (off then on)
+	OCR1B = ICR1 - 2*(ELBOW_DEFAULT) - 1; // Default pulse width
+	
+	// Initialize wrist pwm
+	
+	// Initialize claw pwm
 }
 
 void set_shoulder(uint16_t width)
@@ -65,4 +81,19 @@ void set_shoulder(uint16_t width)
 	// Don't change pulsewidth if width is outside of safe bounds
 	if(SHOULDER_MIN <= width && width <= SHOULDER_MAX)
 		OCR1A = ICR1 - 2*width - 1;
+}
+
+void set_elbow(uint16_t width)
+{
+	// Don't change pulsewidth if width is outside of safe bounds
+	if(ELBOW_MIN <= width && width <= ELBOW_MAX)
+		OCR1B = ICR1 - 2*width - 1;
+}
+
+void set_wrist(uint8_t width)
+{
+}
+
+void set_claw(uint8_t width)
+{
 }

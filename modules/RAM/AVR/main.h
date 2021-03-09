@@ -40,11 +40,14 @@ int main();
 
 /* Initializes clocks, PWM pins, and intial pulse widths to drive servos
  * Registers effected:
+ * TCCR0A
+ * TCCR0B
  * TCCR1A
  * TCCR1B
  * ICR1
  * DDRB
  * OCR1A
+ * OCR1B
  */
 void initialize_PWM();
 
@@ -58,7 +61,7 @@ void set_shoulder(uint16_t width);
 
 /* Safely sets pulsewidth of elbow servo
  * Registers effected:
- *
+ * OCR1B
  * Inputs:
  * width - pulse width in microseconds
  */
