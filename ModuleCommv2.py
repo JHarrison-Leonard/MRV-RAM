@@ -46,6 +46,8 @@ serial_timeout   = 0.01 #seconds
 
 # Returns a serial_find object for a serial device connected to module_usb_port, if
 # available. Retuns None if no serial device is connected.
+# TODO need to determine what makes comports crash, couldn't reproduce with only
+# testing arudino. Error might only appear with multiple modules
 def port_scan():
 	scan = serial_find.comports()
 	for ser in scan:
