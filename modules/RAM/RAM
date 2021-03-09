@@ -26,8 +26,15 @@ sys.stdout =oldout
 controller_MAC = "70:20:84:5E:F7:5E" # TMBH PS4 controller
 
 # Conroller axis and button definitions
-controller_shoulder_down = 0 # TODO Left dpad (currently square)
-controller_shoulder_up = 2 # TODO Right dpad (currently circle)
+controller_shoulder_down = 6 # D-pad down
+controller_shoulder_up = 4 # D-pad up
+controller_elbow_down = 7 # D-pad left
+controller_elbow_up = 5 # D-pad right
+controller_wrist_down = 14 # Cross
+controller_wrist_up = 12 # Triangle
+controller_claw_close = 15 # Square
+controller_claw_open = 13 # Circle
+desired_pygame_analog = [4, 5, 6, 7, 12, 14] # All analog motors
 
 # Controller check interval/rate
 controller_check_interval = 10 #seconds
@@ -43,12 +50,33 @@ change_update_rate = 0.05 #seconds
 # Comm manager definitions
 comm_update_rate = 0.025 #seconds  Must be greater than change_update_rate
 shoulder_char = 'S'
+elbow_char = 'E'
+wrist_char = 'W'
+claw_char = 'C'
 
 # Servo pulsewidth definitions
-shoulder_min = 800 #microseconds
-shoulder_max = 2200 #microseconds
-shoulder_center = 1500 #microseconds
-shoulder_rate = 1000 #microseconds per second
+# Shoulder [SA-1230SG]
+shoulder_min = 800 #us
+shoulder_max = 2200 #us
+shoulder_center = 1500 #us
+shoulder_rate = 1000 #us per second
+# Elbow [2000-0025-0002]
+elbow_min = 500 #us
+elbow_max = 2500 #us
+elbow_center = 1500 #us
+elbow_rate = 1000 #us per second
+# Wrist [D89MW]
+wrist_min = 850 #us
+wrist_max = 2350 #us
+wrist_center = 1600 #us
+wrist_rate = 1000 #us per second
+# Claw [HS-311]
+claw_min = 575 #us
+claw_max = 2460 #us
+claw_center = 1517.5 #us
+claw_close = claw_center - 500
+claw_open = claw_center + 500
+
 
 
 # Initializes controller, if there is one
@@ -106,16 +134,9 @@ def event_manager():
 	
 	while True:
 		event = pygame.event.wait()
-		if event.type is pygame.JOYBUTTONDOWN:
-			if event.button is controller_shoulder_down:
-				change_events.put(event)
-			elif event.button is controller_shoulder_up:
-				change_events.put(event)
-		
-		if event.type is pygame.JOYBUTTONUP:
-			if event.button is controller_shoulder_down:
-				change_events.put(event)
-			elif event.button is controller_shoulder_up:
+		if event.type is pygame.JOYBUTTONDOWN or event.type is pygame.JOYBUTTONUP:
+			print(event.button)
+			if event.button in desired_pygame_analog:
 				change_events.put(event)
 
 # Function designed to run in its own thread. Taking pygame button events sent over event_queue,
@@ -125,32 +146,66 @@ def event_manager():
 def change_manager(event_queue, comm_queue):
 	current_shoulder = shoulder_center
 	shoulder = 0
+	current_elbow = elbow_center
+	elbow = 0
+	current_wrist = wrist_center
+	wrist = 0
 	
 	while True:
-		if not shoulder:
+		if not shoulder and not elbow and not wrist:
 			event = event_queue.get()
+			
 			if event.type is pygame.JOYBUTTONDOWN:
 				if event.button == controller_shoulder_down:
 					shoulder = 1
 				elif event.button == controller_shoulder_up:
 					shoulder = -1
+				elif event.button == controller_elbow_down:
+					elbow = 1
+				elif event.button == controller_elbow_up:
+					elbow = -1
+				elif event.button == controller_wrist_down:
+					wrist = 1
+				elif event.button == controller_wrist_up:
+					wrist = -1
+				
 			elif event.type is pygame.JOYBUTTONUP:
 				if event.button == controller_shoulder_down or event.button == controller_shoulder_up:
 					shoulder = 0
+				elif event.button == controller_elbow_down or event.button == controller_elbow_up:
+					elbow = 0
+				elif event.button == controller_wrist_down or event.button == controller_wrist_up:
+					wrist = 0
+			
 			event_queue.task_done()
 			
 		else:
 			time.sleep(change_update_rate)
 			try:
 				event = event_queue.get_nowait()
+				
 				if event.type is pygame.JOYBUTTONDOWN:
 					if event.button == controller_shoulder_down:
 						shoulder = 1
 					elif event.button == controller_shoulder_up:
 						shoulder = -1
+					elif event.button == controller_elbow_down:
+						elbow = 1
+					elif event.button == controller_elbow_up:
+						elbow = -1
+					elif event.button == controller_wrist_down:
+						wrist = 1
+					elif event.button == controller_wrist_up:
+						wrist = -1
+					
 				elif event.type is pygame.JOYBUTTONUP:
 					if event.button == controller_shoulder_down or event.button == controller_shoulder_up:
 						shoulder = 0
+					elif event.button == controller_elbow_down or event.button == controller_elbow_up:
+						elbow = 0
+					elif event.button == controller_wrist_down or event.button == controller_wrist_up:
+						wrist = 0
+				
 				event_queue.task_done()
 			except queue.Empty as e:
 				pass
@@ -161,7 +216,17 @@ def change_manager(event_queue, comm_queue):
 			next_shoulder = max(min(current_shoulder + shoulder * shoulder_rate * change_update_rate, shoulder_max), shoulder_min)
 			if next_shoulder != current_shoulder:
 				current_shoulder = next_shoulder
-				command += shoulder_char + str(int(current_shoulder))
+				command += shoulder_char + str(int(current_shoulder)) + '\n'
+		if elbow != 0:
+			next_elbow = max(min(current_elbow + elbow * elbow_rate * change_update_rate, elbow_max), elbow_min)
+			if next_elbow != current_elbow:
+				current_elbow = next_elbow
+				command += elbow_char + str(int(current_elbow)) + '\n'
+		if wrist != 0:
+			next_wrist = max(min(current_wrist + wrist * wrist_rate * change_update_rate, wrist_max), wrist_min)
+			if next_wrist != current_wrist:
+				current_wrist = next_wrist
+				command += wrist_char + str(int(current_wrist)) + '\n'
 		
 		# Send command string
 		if command:
@@ -171,7 +236,7 @@ def change_manager(event_queue, comm_queue):
 # at a limited rate to keep from locking up the serial interface.
 def comm_manager(comm_queue):
 	while True:
-		print(comm_queue.get())
+		print(comm_queue.get(), end='')
 		time.sleep(comm_update_rate)
 
 
