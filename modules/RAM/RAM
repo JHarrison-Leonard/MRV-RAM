@@ -26,8 +26,8 @@ sys.stdout =oldout
 controller_MAC = "70:20:84:5E:F7:5E" # TMBH PS4 controller
 
 # Conroller axis and button definitions
-controller_shoulder_turn_left = 0 # TODO Left dpad (currently square)
-controller_shoulder_turn_right = 2 # TODO Right dpad (currently circle
+controller_shoulder_down = 0 # TODO Left dpad (currently square)
+controller_shoulder_up = 2 # TODO Right dpad (currently circle)
 
 # Controller check interval/rate
 controller_check_interval = 10 #seconds
@@ -42,13 +42,13 @@ change_update_rate = 0.05 #seconds
 
 # Comm manager definitions
 comm_update_rate = 0.025 #seconds  Must be greater than change_update_rate
-shoulder_turn_char = 'S'
+shoulder_char = 'S'
 
 # Servo pulsewidth definitions
-shoulder_turn_min = 800 #microseconds
-shoulder_turn_max = 2200 #microseconds
-shoulder_turn_center = 1500 #microseconds
-shoulder_turn_rate = 500 #microseconds per second
+shoulder_min = 800 #microseconds
+shoulder_max = 2200 #microseconds
+shoulder_center = 1500 #microseconds
+shoulder_rate = 250 #microseconds per second
 
 
 # Initializes controller, if there is one
@@ -107,15 +107,15 @@ def event_manager():
 	while True:
 		event = pygame.event.wait()
 		if event.type is pygame.JOYBUTTONDOWN:
-			if event.button is controller_shoulder_turn_left:
+			if event.button is controller_shoulder_down:
 				change_events.put(event)
-			elif event.button is controller_shoulder_turn_right:
+			elif event.button is controller_shoulder_up:
 				change_events.put(event)
 		
 		if event.type is pygame.JOYBUTTONUP:
-			if event.button is controller_shoulder_turn_left:
+			if event.button is controller_shoulder_down:
 				change_events.put(event)
-			elif event.button is controller_shoulder_turn_right:
+			elif event.button is controller_shoulder_up:
 				change_events.put(event)
 
 # Function designed to run in its own thread. Taking pygame button events sent over event_queue,
@@ -123,20 +123,20 @@ def event_manager():
 # For the shoulder turn servo, turns left if controller_shoulder_turn_left is held and turns
 # right if controller_shoulder_turn_right is held.
 def change_manager(event_queue, comm_queue):
-	current_turn = shoulder_turn_center
-	turning = 0
+	current_shoulder = shoulder_center
+	shoulder = 0
 	
 	while True:
-		if not turning:
+		if not shoulder:
 			event = event_queue.get()
 			if event.type is pygame.JOYBUTTONDOWN:
-				if event.button == controller_shoulder_turn_left:
-					turning = 1
-				elif event.button == controller_shoulder_turn_right:
-					turning = -1
+				if event.button == controller_shoulder_down:
+					shoulder = 1
+				elif event.button == controller_shoulder_up:
+					shoulder = -1
 			elif event.type is pygame.JOYBUTTONUP:
-				if event.button == controller_shoulder_turn_left or event.button == controller_shoulder_turn_right:
-					turning = 0
+				if event.button == controller_shoulder_down or event.button == controller_shoulder_up:
+					shoulder = 0
 			event_queue.task_done()
 			
 		else:
@@ -144,25 +144,26 @@ def change_manager(event_queue, comm_queue):
 			try:
 				event = event_queue.get_nowait()
 				if event.type is pygame.JOYBUTTONDOWN:
-					if event.button == controller_shoulder_turn_left:
-						turning = 1
-					elif event.button == controller_shoulder_turn_right:
-						turning = -1
+					if event.button == controller_shoulder_down:
+						shoulder = 1
+					elif event.button == controller_shoulder_up:
+						shoulder = -1
 				elif event.type is pygame.JOYBUTTONUP:
-					if event.button == controller_shoulder_turn_left or event.button == controller_shoulder_turn_right:
-						turning = 0
+					if event.button == controller_shoulder_down or event.button == controller_shoulder_up:
+						shoulder = 0
 				event_queue.task_done()
 			except queue.Empty as e:
 				pass
 		
 		# Building command string
 		command = ""
-		if turning != 0:
-			current_turn = max(min(current_turn + turning * shoulder_turn_rate * change_update_rate, shoulder_turn_max), shoulder_turn_min)
-			command = shoulder_turn_char + str(int(current_turn))
+		if shoulder != 0:
+			current_shoulder = max(min(current_shoulder + shoulder * shoulder_rate * change_update_rate, shoulder_max), shoulder_min)
+			command += shoulder_char + str(int(current_shoulder))
 		
 		# Send command string
-		comm_queue.put(command)
+		if command:
+			comm_queue.put(command)
 
 # Function designed to run in its own thread. Sends strings sent through comm_queue over the stdout
 # at a limited rate to keep from locking up the serial interface.
