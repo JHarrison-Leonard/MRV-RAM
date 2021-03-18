@@ -83,5 +83,10 @@ void set_wrist(uint16_t width);
  */
 void set_claw(uint16_t width);
 
+/* Greatest 8-bit factor
+ * Returns the greatest 8-bit factor of n
+ */
+uint8_t G8BF(unsigned int n);
+
 
 #endif
