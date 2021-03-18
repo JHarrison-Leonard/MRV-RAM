@@ -10,9 +10,15 @@
 
 
 
+// Timer 0 psuedo upper 8 bits
 static uint8_t timer0_utop = 0;
 static uint8_t timer0_ucnt = 0;
 static uint8_t timer0_ucrb = 0;
+
+// Timer 2 psuedo upper 8 bits
+static uint8_t timer2_utop = 0;
+static uint8_t timer2_ucnt = 0;
+static uint8_t timer2_ucrb = 0;
 
 
 
@@ -64,7 +70,7 @@ int main()
 void initialize_PWM()
 {
 	// Initialize 8-bit clock 0
-	TCCR0A |= _BV(WGM01) | _BV(WGM00);                   // <-- Sets timer 1 to fast PWM mode
+	TCCR0A |= _BV(WGM01) | _BV(WGM00);                   // <-- Sets timer 0 to fast PWM mode
 	TCCR0B |= _BV(WGM02);                                // <-/ with TOP and TOV at OCR0A
 	TCCR0B &= ~_BV(CS02) & ~_BV(CS00);                   // <-- Sets prescaler to 1/8
 	TCCR0B |= _BV(CS01);                                 // <-/
@@ -80,6 +86,16 @@ void initialize_PWM()
 	TCCR1B &= ~_BV(CS10);                 // <-- Sets prescaler to 1/8
 	TCCR1B |= _BV(CS11);                  // <-/
 	ICR1 = (F_CPU / 8) / SERVO_FREQUENCY; // Sets timer 1 TOP to get 20 ms period
+	
+	// Initialize 8-bit clock 2
+	TCCR2A |= _BV(WGM21) | _BV(WGM20);                   // <-- Sets timer 2 to fast PWM mode
+	TCCR2B |= _BV(WGM22);                                // <-/ with TOP and TOV at OCR2A
+	TCCR2B &= ~_BV(CS22) & ~_BV(CS20);                   // <-- Sets prescaler to 1/8
+	TCCR2B |= _BV(CS21);                                 // <-/
+	OCR2A = G8BF((F_CPU / 8) / SERVO_FREQUENCY);         // Sets TOP to 8-bit factor of 20 ms
+	timer2_utop = (F_CPU / 8) / SERVO_FREQUENCY / OCR2A; // Interrupts finalize 20 ms period
+	TIFR2 &= _BV(TOV2);                                  // Clear overflow interrupt flag
+	TIMSK2 |= _BV(TOIE2);                                // Enable overflow interrupt
 	
 	// Initialize shoulder pwm
 	DDRB |= _BV(PORTB1);                     // Pin 9 out
@@ -98,6 +114,10 @@ void initialize_PWM()
 	timer0_ucrb = timer0_utop - (2*(WRIST_DEFAULT) / OCR0A) - 1; // <-/
 	
 	// Initialize claw pwm
+	DDRD |= _BV(PORTD3);                                         // Pin 3 out
+	TCCR2A &= ~_BV(COM2B1) & ~_BV(COM2B0);                       // Normal port operation
+	OCR2B = OCR2A - (2*(CLAW_DEFAULT) % OCR2A) - 1;              // <-- Defalt pulse width
+	timer2_ucrb = timer2_utop - (2*(CLAW_DEFAULT) / OCR2A) - 1;  // <-/
 }
 
 void set_shoulder(uint16_t width)
@@ -120,14 +140,18 @@ void set_wrist(uint16_t width)
 	if(WRIST_MIN <= width && width <= WRIST_MAX)
 	{
 		OCR0B = OCR0A - (2*width % OCR0A) - 1;
-		timer0_ucrb = tmer0_utop - (2*width / OCR0A) - 1;
+		timer0_ucrb = timer0_utop - (2*width / OCR0A) - 1;
 	}
 }
 
 void set_claw(uint16_t width)
 {
 	// Don't change pulsewidth ifwidth is outside of safe bounds
-	if(CLAW_MIN <= width && width <= CLAW_MAX);
+	if(CLAW_MIN <= width && width <= CLAW_MAX)
+	{
+		OCR2B = OCR2A - (2*width % OCR2A) - 1;
+		timer2_ucrb = timer2_utop - (2*width / OCR2A) - 1;
+	}
 }
 
 uint8_t G8BF(unsigned int n)
@@ -160,4 +184,25 @@ ISR(TIMER0_COMPB_vect)
 {
 	PORTD |= _BV(PORTD5);
 	TIMSK0 &= ~_BV(OCIE0B);
+}
+
+ISR(TIMER2_OVF_vect)
+{
+	timer2_ucnt++;
+	if(timer2_ucnt >= timer2_utop)
+	{
+		timer2_ucnt = 0;
+		PORTD &= ~_BV(PORTD3);
+	}
+	else if(timer2_ucnt == timer2_ucrb)
+	{
+		TIFR2 &= ~_BV(OCF2B);
+		TIMSK2 |= _BV(OCIE2B);
+	}
+}
+
+ISR(TIMER2_COMPB_vect)
+{
+	PORTD |= _BV(PORTD3);
+	TIMSK2 &= ~_BV(OCIE2B);
 }
