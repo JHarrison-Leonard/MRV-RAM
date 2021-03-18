@@ -73,7 +73,7 @@ void set_elbow(uint16_t width);
  * Inputs:
  * width - pulse width in microseconds
  */
-void set_wrist(uint8_t width);
+void set_wrist(uint16_t width);
 
 /* Safely set pulsewidth of claw servo
  * Registers effected:
@@ -81,7 +81,7 @@ void set_wrist(uint8_t width);
  * Inputs:
  * width - pulse width in microseconds
  */
-void set_claw(uint8_t width);
+void set_claw(uint16_t width);
 
 
 #endif

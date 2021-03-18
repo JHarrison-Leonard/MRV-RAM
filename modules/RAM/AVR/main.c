@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <avr/io.h>
+#include <avr/interrupt.h>
 #include <string.h>
 
 #include "main.h"
@@ -38,6 +39,9 @@ int main()
 			{
 				case SHOULDER_CHAR:
 					set_shoulder(atoi(input + 1));
+					break;
+				case ELBOW_CHAR:
+					set_elbow(atoi(input + 1));
 					break;
 			}
 		}
@@ -90,10 +94,14 @@ void set_elbow(uint16_t width)
 		OCR1B = ICR1 - 2*width - 1;
 }
 
-void set_wrist(uint8_t width)
+void set_wrist(uint16_t width)
 {
 }
 
-void set_claw(uint8_t width)
+void set_claw(uint16_t width)
+{
+}
+
+ISR(TIMER0_OVF_vect)
 {
 }
