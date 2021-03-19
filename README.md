@@ -27,13 +27,13 @@ pigpiod &
       - [Makefile](modules/RAM/AVR/Makefile) Allows for easy compiling of RAM arduino code with `make` and upload with `make deploy`
 
 ## Process flow diagrams
-###ModuleCommv2.py
+### ModuleCommv2.py
 ![ModuleCommv2.py](flowcharts/ModuleCommv2.jpg)
 
-###PS3RCv2.py
+### PS3RCv2.py
 ![PS3RCv2.py](flowcharts/PS3RCv2.jpg)
 
-###RAM
+### RAM
 ![RAM](flowcharts/RAMManager.jpg)
 
 ## Coding your own module manager
