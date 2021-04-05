@@ -44,7 +44,6 @@ controller_init_retry_interval = 0.2 #seconds
 controller_init_retry_max = controller_check_interval / controller_init_retry_interval
 
 # Speed manager lock-up surpression
-# TODO Tweak this for MRV. It still locks up on rare occasions
 speed_change_max = 100 #pulse width per interval
 speed_change_interval = 0.1 #seconds
 
@@ -54,7 +53,7 @@ motor_throttle_stable = 1300
 motor_throttle_weighting = 100
 motor_throttle_turbo_multiplier = 2
 motor_steer_straight = 1540
-motor_steer_left_weighting  = 355 # TODO play around with these, it turns really wide atm
+motor_steer_left_weighting  = 355
 motor_steer_right_weighting = 370
 
 # pygame event whitelist
@@ -110,9 +109,6 @@ def speed_calc(axis_value, turbo):
 # queued pygame events are expected to already be for throttle and turbo inputs and are not
 # checked. Attempts to gradually set the current pulsewidth to an inputed target pulsewidth
 # at a rate of speed_change_max / speed_change_interval.
-# TODO Implement braking on coast. Wouldn't I need to be able to measure the velocity?
-#      This might be achieveable by designing an observer that approximates the velocity
-#      given target_speed. Low priority.
 def speed_manager(gpio_controller, event_queue):
 	turbo = False
 	target_axis = 0.0
