@@ -61,6 +61,9 @@ int main()
 					break;
 				case WRIST_CHAR:
 					set_wrist(atoi(input + 1));
+					break;
+				case CLAW_CHAR:
+					set_claw(atoi(input + 1));
 			}
 		}
 	}
@@ -146,7 +149,7 @@ void set_wrist(uint16_t width)
 
 void set_claw(uint16_t width)
 {
-	// Don't change pulsewidth ifwidth is outside of safe bounds
+	// Don't change pulsewidth if width is outside of safe bounds
 	if(CLAW_MIN <= width && width <= CLAW_MAX)
 	{
 		OCR2B = OCR2A - (2*width % OCR2A) - 1;
@@ -164,7 +167,10 @@ uint8_t G8BF(unsigned int n)
 
 
 
-// ISR Definitions
+// Timer0 overflow interrupt
+// Inrements the upper 8 bit counter
+// Sets low at upper 8 bit top, similar to fast PWM mode
+// Enables timer0 comparison b interrupt at appropriate upper 8 bit count
 ISR(TIMER0_OVF_vect)
 {
 	timer0_ucnt++;
@@ -180,12 +186,17 @@ ISR(TIMER0_OVF_vect)
 	}
 }
 
+// Timer0 comparison b interrupt
+// Sets high at comparison, similar to fast PWM mode
+// Disables this interrupt so as to not trigger multiple times per period
 ISR(TIMER0_COMPB_vect)
 {
 	PORTD |= _BV(PORTD5);
 	TIMSK0 &= ~_BV(OCIE0B);
 }
 
+// Timer2 overflow interrupt
+// Same as timer0 overflow interrupt
 ISR(TIMER2_OVF_vect)
 {
 	timer2_ucnt++;
@@ -201,6 +212,8 @@ ISR(TIMER2_OVF_vect)
 	}
 }
 
+// Timer2 comparison b interrupt
+// Same as timer2 comparison b interrupt
 ISR(TIMER2_COMPB_vect)
 {
 	PORTD |= _BV(PORTD3);
