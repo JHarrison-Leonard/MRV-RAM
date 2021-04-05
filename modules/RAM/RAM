@@ -22,8 +22,8 @@ sys.stdout =oldout
 
 ## Controller code stolen straight from PS3RCv2.py
 # Controller MAC
-#controller_MAC = "00:19:C1:15:D9:F8" # MRV PS3 controller
-controller_MAC = "70:20:84:5E:F7:5E" # TMBH PS4 controller
+controller_MAC = "00:19:C1:15:D9:F8" # MRV PS3 controller
+#controller_MAC = "70:20:84:5E:F7:5E" # TMBH PS4 controller
 
 # Conroller axis and button definitions
 controller_shoulder_down = 6 # D-pad down
@@ -143,6 +143,9 @@ def event_manager():
 # keeps track of and manages the pulsewidth commands to be sent to the module via comm_manager.
 # For the shoulder turn servo, turns left if controller_shoulder_turn_left is held and turns
 # right if controller_shoulder_turn_right is held.
+# Dev note: I legitimately hate this code just. It's ugly, it's got the sterotypical elif train, and it's ugly.
+# Seriously, if anyone knows how to make this not suck in python, hit me up. This will be the only thing in
+# this repository I will be willing to change after I graduate.
 def change_manager(event_queue, comm_queue):
 	current_shoulder = shoulder_center
 	shoulder = 0
@@ -150,6 +153,8 @@ def change_manager(event_queue, comm_queue):
 	elbow = 0
 	current_wrist = wrist_center
 	wrist = 0
+	current_claw = claw_center
+	claw = claw_center
 	
 	while True:
 		if not shoulder and not elbow and not wrist:
@@ -168,6 +173,10 @@ def change_manager(event_queue, comm_queue):
 					wrist = 1
 				elif event.button == controller_wrist_up:
 					wrist = -1
+				elif event.button == controller_claw_close:
+					claw = claw_close
+				elif event.button == controller_claw_open:
+					claw = claw_open
 				
 			elif event.type is pygame.JOYBUTTONUP:
 				if event.button == controller_shoulder_down or event.button == controller_shoulder_up:
@@ -176,6 +185,8 @@ def change_manager(event_queue, comm_queue):
 					elbow = 0
 				elif event.button == controller_wrist_down or event.button == controller_wrist_up:
 					wrist = 0
+				elif event.button == controller_claw_close or event.button == controller_claw_open:
+					claw = claw_center
 			
 			event_queue.task_done()
 			
@@ -197,6 +208,10 @@ def change_manager(event_queue, comm_queue):
 						wrist = 1
 					elif event.button == controller_wrist_up:
 						wrist = -1
+					elif event.button == controller_claw_close:
+						claw = claw_close
+					elif event.button == controller_claw_open:
+						claw = claw_open
 					
 				elif event.type is pygame.JOYBUTTONUP:
 					if event.button == controller_shoulder_down or event.button == controller_shoulder_up:
@@ -205,6 +220,8 @@ def change_manager(event_queue, comm_queue):
 						elbow = 0
 					elif event.button == controller_wrist_down or event.button == controller_wrist_up:
 						wrist = 0
+					elif event.button == controller_claw_close or event.button == controller_claw_open:
+						calw = claw_center
 				
 				event_queue.task_done()
 			except queue.Empty as e:
@@ -227,6 +244,9 @@ def change_manager(event_queue, comm_queue):
 			if next_wrist != current_wrist:
 				current_wrist = next_wrist
 				command += wrist_char + str(int(current_wrist)) + '\n'
+		if claw != claw_current
+			claw_current == claw
+			command += claw_char + str(int(claw_current)) + '\n'
 		
 		# Send command string
 		if command:
