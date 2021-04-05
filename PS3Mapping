@@ -1,0 +1,29 @@
+[Button]
+Triangle: 12
+Circle: 13
+Cross: 14
+Square: 15
+
+D-Up: 4
+D-Right: 5
+D-Down: 6
+D-Left: 7
+
+L2: 8
+R2: 9
+L1: 10
+R1: 11 (Broken on MRV PS3 controller)
+
+L3: 1
+R3: 2
+
+Select: 0
+Start: 3
+
+PS Button: 16
+
+[Axis]
+Left Stick Left-Right: 0
+Left Stick Up-Down: 1
+Right Stick Left-Right: 2
+Right Stick Up-Down: 3

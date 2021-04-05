@@ -1,5 +1,7 @@
 # MRV-RAM
-Modular Remote Vehicle - Robotic Arm Module
+#### Modular Remote Vehicle - Robotic Arm Module
+#### Team The Might Be Heisenberg
+#### UAH EE 494 Senior Design
 
 ## Installation
 This has already been installed on the MRV, though these were the steps taken:
@@ -12,6 +14,8 @@ pigpiod &
 ```
 
 ## File overview
+- [LICENSE](LICENSE) MIT license for this repository, be sure to bundle this with your project if you copy any code
+- [PS3Mapping](PS3Mapping) List of PS3 controller inputs t their resective pygame values
 - [PS3RCv2.py](PS3RCv2.py) Rewrite of original MRV code. Handles car control using the PS3 controller
 - [ModuleCommv2.py](ModuleCommv2.py) Rewrite of original MRV code. Handles communication between MRV and modules, as well as executing module specific code
 - modules
@@ -26,6 +30,13 @@ pigpiod &
       - [serialIO.h](modules/RAM/AVR/serialIO.h) Header file for serialIO.c
       - [Makefile](modules/RAM/AVR/Makefile) Allows for easy compiling of RAM arduino code with `make` and upload with `make deploy`
 
+## Coding your own module manager
+There are a few requirements to consider when making a module manager:
+- First, ModuleCommv2.py can only detect serial USB devices, this shouldn't be an issue if you're just communicating over serial to an arduino or the like, though if you need more control of the usb interface you may need to have your device act as a usb serial for the initial connection.
+- Secondly, when ModuleCommv2.py sends the binary string "Module?\n" over serial, the module should respond with it's "name". This name is directly connected to the module path in [modules](modules/) as well as the module manager executable file. For example, the original metal detecting module has the name MDM, so the path to it's module manager is modules/MDM/MDM
+- Thirdly, The module manager's executable must respond to the "type" argument with either "piped serial" or "full serial" and then immediately exit.
+- The [MDM module manager](modules/MDM/MDM) acts as demonstrational code for the piped serial manager type and has more details
+
 ## Process flow diagrams
 ### ModuleCommv2.py
 ![ModuleCommv2.py](flowcharts/ModuleCommv2.jpg)
@@ -36,5 +47,3 @@ pigpiod &
 ### RAM
 ![RAM](flowcharts/RAMManager.jpg)
 
-## Coding your own module manager
-TODO
