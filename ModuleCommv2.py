@@ -46,10 +46,11 @@ serial_timeout   = 0.01 #seconds
 
 # Returns a serial_find object for a serial device connected to module_usb_port, if
 # available. Retuns None if no serial device is connected.
-# TODO need to determine what makes comports crash, couldn't reproduce with only
-# testing arudino. Error might only appear with multiple modules
 def port_scan():
-	scan = serial_find.comports()
+	try:
+		scan = serial_find.comports()
+	except e:
+		pass
 	for ser in scan:
 		if  module_usb_port in str(ser.location):
 			return ser
@@ -112,7 +113,7 @@ while True:
 					print("Module manager type:", module_manager_type)
 					p = subprocess.Popen([module_manager_path], stdin=ser, stdout=ser)
 					while port_scan() is not None and p.poll() is None:
-						time.sleep(module_probe_interval) # Loops until module is disconnected or manager closes
+						pass # Loops until module is disconnected or manager closes
 					p.kill()
 					ser.close()
 					
