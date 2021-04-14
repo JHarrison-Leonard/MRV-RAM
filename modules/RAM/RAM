@@ -244,9 +244,9 @@ def change_manager(event_queue, comm_queue):
 			if next_wrist != current_wrist:
 				current_wrist = next_wrist
 				command += wrist_char + str(int(current_wrist)) + '\n'
-		if claw != claw_current
-			claw_current == claw
-			command += claw_char + str(int(claw_current)) + '\n'
+		if claw != current_claw:
+			current_claw == claw
+			command += claw_char + str(int(current_claw)) + '\n'
 		
 		# Send command string
 		if command:
