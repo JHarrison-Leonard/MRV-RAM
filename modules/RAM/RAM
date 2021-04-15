@@ -34,7 +34,7 @@ controller_wrist_down = 14 # Cross
 controller_wrist_up = 12 # Triangle
 controller_claw_close = 15 # Square
 controller_claw_open = 13 # Circle
-desired_pygame_analog = [4, 5, 6, 7, 12, 14] # All analog motors
+desired_pygame = [4, 5, 6, 7, 12, 13, 14, 15] # All inputs
 
 # Controller check interval/rate
 controller_check_interval = 10 #seconds
@@ -135,8 +135,7 @@ def event_manager():
 	while True:
 		event = pygame.event.wait()
 		if event.type is pygame.JOYBUTTONDOWN or event.type is pygame.JOYBUTTONUP:
-			print(event.button)
-			if event.button in desired_pygame_analog:
+			if event.button in desired_pygame:
 				change_events.put(event)
 
 # Function designed to run in its own thread. Taking pygame button events sent over event_queue,
@@ -221,7 +220,7 @@ def change_manager(event_queue, comm_queue):
 					elif event.button == controller_wrist_down or event.button == controller_wrist_up:
 						wrist = 0
 					elif event.button == controller_claw_close or event.button == controller_claw_open:
-						calw = claw_center
+						claw = claw_center
 				
 				event_queue.task_done()
 			except queue.Empty as e:
@@ -245,7 +244,7 @@ def change_manager(event_queue, comm_queue):
 				current_wrist = next_wrist
 				command += wrist_char + str(int(current_wrist)) + '\n'
 		if claw != current_claw:
-			current_claw == claw
+			current_claw = claw
 			command += claw_char + str(int(current_claw)) + '\n'
 		
 		# Send command string
