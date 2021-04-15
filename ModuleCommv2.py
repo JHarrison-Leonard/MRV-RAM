@@ -49,7 +49,7 @@ serial_timeout   = 0.01 #seconds
 def port_scan():
 	try:
 		scan = serial_find.comports()
-	except e:
+	except:
 		pass
 	for ser in scan:
 		if  module_usb_port in str(ser.location):
