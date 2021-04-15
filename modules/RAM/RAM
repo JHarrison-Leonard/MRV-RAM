@@ -73,9 +73,9 @@ wrist_rate = 1000 #us per second
 # Claw [HS-311]
 claw_min = 575 #us
 claw_max = 2460 #us
-claw_center = 1518 #us
-claw_close = claw_center - 500
-claw_open = claw_center + 500
+claw_center = 1265 #us
+claw_close = claw_center - 300
+claw_open = claw_center + 300
 
 
 
