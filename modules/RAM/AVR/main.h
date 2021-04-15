@@ -33,7 +33,7 @@
 // Claw pulse width definitions in microseconds (us)
 #define CLAW_MIN 575
 #define CLAW_MAX 2460
-#define CLAW_DEFAULT 1518
+#define CLAW_DEFAULT 1265
 
 
 int main();
