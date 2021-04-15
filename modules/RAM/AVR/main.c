@@ -157,7 +157,7 @@ void set_claw(uint16_t width)
 	}
 }
 
-uint8_t G8BF(unsigned int n)
+uint8_t G8BF(uint16_t n)
 {
 	for(uint8_t i = UINT8_MAX; i > 0; i--)
 		if(n % i == 0)
@@ -181,7 +181,7 @@ ISR(TIMER0_OVF_vect)
 	}
 	else if(timer0_ucnt == timer0_ucrb)
 	{
-		TIFR0 &= ~_BV(OCF0B);
+		TIFR0 |= _BV(OCF0B);
 		TIMSK0 |= _BV(OCIE0B);
 	}
 }
@@ -207,7 +207,7 @@ ISR(TIMER2_OVF_vect)
 	}
 	else if(timer2_ucnt == timer2_ucrb)
 	{
-		TIFR2 &= ~_BV(OCF2B);
+		TIFR2 |= _BV(OCF2B);
 		TIMSK2 |= _BV(OCIE2B);
 	}
 }
