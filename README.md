@@ -1,3 +1,6 @@
+Given this is to be representative of what was created and submitted for my senior design course, this is repository has been archived.
+Feel free to fork and update the software as needed for future senior design projects.
+
 # MRV-RAM
 #### Modular Remote Vehicle - Robotic Arm Module
 #### Team The Might Be Heisenberg
